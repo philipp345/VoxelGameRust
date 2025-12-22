@@ -1,3 +1,5 @@
+mod voxel;
+use voxel::chunk::Chunk;
 use bevy::prelude::*;
 use bevy::math::primitives::Plane3d;
 use bevy::input::mouse::MouseMotion;
@@ -5,11 +7,14 @@ use bevy::window::{CursorGrabMode, CursorOptions, PrimaryWindow};
 use bevy::color::palettes::basic::SILVER;
 use bevy::math::primitives::Cuboid;
 use bevy::color::Srgba;
+use bevy::pbr::MeshMaterial3d;
+
 
 fn main() {
     App::new()
         .add_plugins(DefaultPlugins)
         .add_systems(Startup, setup)
+        .add_systems(Startup, test_chunk_system)
         .add_systems(Update,player_movement)
         .add_systems(Update,mouse_look)
         .add_systems(Update,cursor_grab_system)
@@ -48,7 +53,19 @@ fn setup(
                          ..default()
                      },
                      Transform::from_xyz(10.0, 10.0, 10.0),
-    ));
+    ))// 2. Fügen Sie die sichtbare Kugel als Kind hinzu.
+        .with_children(|parent| {
+            // Hängen Sie die Kugel als Kind an, indem Sie EINZELNE Komponenten hinzufügen
+            parent.spawn((
+                Mesh3d(meshes.add(Sphere::new(0.3).mesh().uv(32, 18))),
+                MeshMaterial3d(materials.add(StandardMaterial {
+                    base_color: Srgba::rgb(1.0, 1.0, 0.0).into(),
+                    unlit: true,
+                    ..default()
+                })),
+                Transform::default(),
+            ));
+        });
 
     // Boden
     commands.spawn((Mesh3d(meshes.add(Plane3d::default().mesh().size(50.0, 50.0))),
@@ -157,7 +174,19 @@ fn cursor_grab_system(
 
 
 
+fn test_chunk_system() {
+    let mut chunk = Chunk::new(0, 0);
+    chunk.fill_test_terrain();
 
+    println!(
+        "Block (0, 0, 0): {}",
+        chunk.get_block(0, 0, 0)
+    );
+    println!(
+        "Block (0, 20, 0): {}",
+        chunk.get_block(0, 20, 0)
+    );
+}
 
 
 
