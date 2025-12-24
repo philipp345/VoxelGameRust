@@ -1,5 +1,5 @@
 use serde::{Deserialize, Serialize};
-
+use noise::{Perlin, NoiseFn};
 
 
 pub const CHUNK_SIZE: usize = 16;
@@ -53,8 +53,27 @@ impl Chunk {
         }
     }
 
-
+    pub fn generate_chunk(&mut self) {
+        for x in 0..CHUNK_SIZE {
+            for z in 0..CHUNK_SIZE {
+                let world_x = self.cx * CHUNK_SIZE as i32 + x as i32;
+                let world_z = self.cz * CHUNK_SIZE as i32 + z as i32;
+                let h = generate_height(world_x as f64, world_z as f64);
+                for y in 0..CHUNK_HEIGHT {
+                    let idx = Chunk::index(x, y, z);
+                    self.blocks[idx] = if (y as i32) < h { 1 } else { 0 };
+                }
+            }
+        }
+    }
 
     
 }
+
+fn generate_height(x: f64, z: f64) -> i32 {
+    let perlin = Perlin::default();
+    let n = perlin.get([x * 0.01, z * 0.01]);
+    (n * 20.0 + 64.0) as i32
+}
+
 

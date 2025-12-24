@@ -177,6 +177,7 @@ fn cursor_grab_system(
 fn test_chunk_system() {
     let mut chunk = Chunk::new(0, 0);
     chunk.fill_test_terrain();
+    chunk.generate_chunk();
 
     println!(
         "Block (0, 0, 0): {}",
