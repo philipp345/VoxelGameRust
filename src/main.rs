@@ -187,6 +187,20 @@ fn test_chunk_system() {
         "Block (0, 20, 0): {}",
         chunk.get_block(0, 20, 0)
     );
+
+}
+
+
+
+//Similar to fn get_player_pos(query: Query<&GlobalTransform, With<Player>>) -> Vec<Vec3> {
+//     query.iter().map(|gt| gt.translation()).collect()
+// }
+fn get_player_pos(query: Query<&GlobalTransform, With<Player>>)->Vec<Vec3>{
+    let mut positions:Vec<Vec3> = Vec::new();
+    for i in &query {
+        positions.push(i.translation());
+    }
+    positions
 }
 
 
