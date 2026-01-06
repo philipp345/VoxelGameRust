@@ -1,3 +1,4 @@
+use bevy::math::Vec3;
 use serde::{Deserialize, Serialize};
 use noise::{Perlin, NoiseFn};
 
@@ -76,4 +77,40 @@ fn generate_height(x: f64, z: f64) -> i32 {
     (n * 20.0 + 64.0) as i32
 }
 
+pub fn get_chunks_playerposition(position: Vec3,range:ChunkRange)-> Vec<(i32,i32)>{
+    let playerposx :i32 = position.x as i32;
+    let playerposz :i32 = position.z as i32;
+
+    let chunkx = playerposx / CHUNK_SIZE as i32;
+    let chunkz = playerposz / CHUNK_SIZE as i32;
+    let range_iter = range.value();
+    let range_iter_i32 = range_iter as i32;
+
+    let mut returnvector:Vec<(i32,i32)> = Vec::new();
+    for xcordinates in -range_iter_i32..=range_iter_i32 {
+        for zcordinates in -range_iter_i32..=range_iter_i32 {
+            returnvector.push((chunkx+xcordinates,chunkz+zcordinates))
+
+        }
+    }
+    returnvector
+
+
+}
+
+#[derive(Debug,Copy,Clone)]
+pub struct ChunkRange(u8);
+impl ChunkRange {
+    pub fn new(range:u8) -> Option<Self> {
+        if range <= 9 {
+            Some(ChunkRange(range))
+        } else {
+            None
+        }
+    }
+
+    fn value(self) -> u8 {
+        self.0
+    }
+}
 
