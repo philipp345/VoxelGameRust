@@ -18,6 +18,7 @@ fn main() {
         .add_systems(Update,player_movement)
         .add_systems(Update,mouse_look)
         .add_systems(Update,cursor_grab_system)
+        .add_systems(Update,get_player_pos)
         .run();
 }
 
@@ -175,6 +176,8 @@ fn cursor_grab_system(
 
 
 fn test_chunk_system() {
+
+    
     let mut chunk = Chunk::new(0, 0);
     chunk.fill_test_terrain();
     chunk.generate_chunk();
@@ -195,12 +198,17 @@ fn test_chunk_system() {
 //Similar to fn get_player_pos(query: Query<&GlobalTransform, With<Player>>) -> Vec<Vec3> {
 //     query.iter().map(|gt| gt.translation()).collect()
 // }
-fn get_player_pos(query: Query<&GlobalTransform, With<Player>>)->Vec<Vec3>{
-    let mut positions:Vec<Vec3> = Vec::new();
+fn get_player_pos(query: Query<&GlobalTransform, With<Player>>, mut player_positions: ResMut<PlayerPositions>){
+    player_positions.positions.clear();
     for i in &query {
-        positions.push(i.translation());
+        player_positions.positions.push(i.translation());
     }
-    positions
+
+}
+
+#[derive(Resource, Default)]
+pub struct PlayerPositions {
+    pub positions: Vec<Vec3>
 }
 
 
