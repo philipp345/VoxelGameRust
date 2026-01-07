@@ -1,10 +1,12 @@
 use bevy::math::Vec3;
 use serde::{Deserialize, Serialize};
 use noise::{Perlin, NoiseFn};
-
+use bevy::prelude::*;
+use crate::{Player, PlayerPositions};
 
 pub const CHUNK_SIZE: usize = 16;
 pub const CHUNK_HEIGHT: usize = 128;
+pub const DEFAULT_CHUNK_RANGE: u8 = 5;
 
 
 
@@ -114,3 +116,41 @@ impl ChunkRange {
     }
 }
 
+#[derive(Component,Default)]
+pub struct PlayerChunk{
+    pub chunk:Vec<(i32,i32)>,
+}
+
+
+#[derive(Resource,Default)]
+pub struct VisibleChunks{
+    pub chunks: Vec<(i32,i32)>,
+}
+
+pub fn update_visible_chunks(
+    mut query_player_chunk:Query<&mut PlayerChunk,With<Player>>,
+    mut visible_chunks:ResMut<VisibleChunks>,
+    player_position:Res<PlayerPositions>) {
+    let player_position_var = player_position.positions[0];
+    match ChunkRange::new(0) {
+        Some(range) => {
+            let current_chunk = get_chunks_playerposition(player_position_var, range);
+            let mut value_query_player_chunk = match query_player_chunk.single_mut() {
+                Ok(player_chunk) => player_chunk,
+                Err(_) => return,
+            };
+            if current_chunk != value_query_player_chunk.chunk {
+                match ChunkRange::new(DEFAULT_CHUNK_RANGE) {
+                    Some(range) => {
+                        let current_visible_chunks = get_chunks_playerposition(player_position_var, range);
+                        visible_chunks.chunks = current_visible_chunks;
+                        value_query_player_chunk.chunk=current_chunk;
+                    }
+                    None => {}
+                }
+            }
+        }
+        None => {}
+
+    }
+}

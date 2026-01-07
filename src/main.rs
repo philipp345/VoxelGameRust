@@ -8,7 +8,7 @@ use bevy::color::palettes::basic::SILVER;
 use bevy::math::primitives::Cuboid;
 use bevy::color::Srgba;
 use bevy::pbr::MeshMaterial3d;
-
+use crate::voxel::chunk::update_visible_chunks;
 
 fn main() {
     App::new()
@@ -19,6 +19,7 @@ fn main() {
         .add_systems(Update,mouse_look)
         .add_systems(Update,cursor_grab_system)
         .add_systems(Update,get_player_pos)
+        .add_systems(Update,update_visible_chunks)
         .run();
 }
 
