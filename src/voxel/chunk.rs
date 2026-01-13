@@ -33,6 +33,16 @@ impl Chunk {
         x + CHUNK_SIZE * (z + CHUNK_SIZE * y)
     }
 
+    pub fn get_coords(index: usize) -> (usize, usize, usize) {
+        let s = CHUNK_SIZE;
+
+        let x = index % s;
+        let z = (index / s) % s;
+        let y = index / (s * s);
+
+        (x, y, z)
+    }
+
     pub fn set_block(&mut self, x: usize, y: usize, z: usize, id: u8) {
         let index = Self::index(x, y, z);
         self.blocks[index] = id;
