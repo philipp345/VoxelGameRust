@@ -2,6 +2,7 @@ use bevy::math::Vec3;
 use serde::{Deserialize, Serialize};
 use noise::{Perlin, NoiseFn};
 use bevy::prelude::*;
+use std::collections::HashMap;
 use crate::{Player, PlayerPositions};
 
 pub const CHUNK_SIZE: usize = 16;
@@ -162,5 +163,22 @@ pub fn update_visible_chunks(
         }
         None => {}
 
+    }
+}
+#[derive(Resource,Default)]
+pub struct ChunkStorage {
+    pub chunks: HashMap<(i32,i32), Chunk>,
+}
+
+pub fn load_missing_chunks(visible_chunks:Res<VisibleChunks>,mut storage:ResMut<ChunkStorage>) {
+    if visible_chunks.is_changed(){
+        for &(coordinatex,coordinatey) in &visible_chunks.chunks{
+            if !storage.chunks.contains_key(&(coordinatex,coordinatey)){
+                let mut chunk = Chunk::new(coordinatex,coordinatey);
+                chunk.generate_chunk();
+                storage.chunks.insert((coordinatex,coordinatey), chunk);
+
+            }
+        }
     }
 }
