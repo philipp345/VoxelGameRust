@@ -1,4 +1,6 @@
 use bevy::prelude::*;
+use crate::voxel::chunk::*;
+
 
 pub struct MeshData {
     pub positions: Vec<[f32;3]>,
@@ -14,6 +16,8 @@ pub struct AtlasUV {
     pub v_max: f32,
 }
 
-
+pub fn update_meshes(chunk:VisibleChunks){
+    for chunk in
+}
 
 

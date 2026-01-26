@@ -150,6 +150,9 @@ pub fn update_visible_chunks(
                 Ok(player_chunk) => player_chunk,
                 Err(_) => return,
             };
+            //The following check will evaluate to true in the following cases:
+            //1.First call after start of game because PlayerChunk will be empty
+            //2.If current chunk changes after player movement
             if current_chunk != value_query_player_chunk.chunk {
                 match ChunkRange::new(DEFAULT_CHUNK_RANGE) {
                     Some(range) => {
@@ -171,6 +174,7 @@ pub struct ChunkStorage {
 }
 
 pub fn load_missing_chunks(visible_chunks:Res<VisibleChunks>,mut storage:ResMut<ChunkStorage>) {
+    //The following statement will be true in the first run, i.e. game start, because update_visible_chunks is executed before and will set the change tick.
     if visible_chunks.is_changed(){
         for &(coordinatex,coordinatey) in &visible_chunks.chunks{
             if !storage.chunks.contains_key(&(coordinatex,coordinatey)){

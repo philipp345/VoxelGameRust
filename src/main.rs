@@ -7,6 +7,7 @@ use bevy::window::{CursorGrabMode, CursorOptions, PrimaryWindow};
 use bevy::color::palettes::basic::SILVER;
 use bevy::math::primitives::Cuboid;
 use bevy::color::Srgba;
+use bevy::ecs::system::command::insert_resource;
 use bevy::pbr::MeshMaterial3d;
 
 
@@ -33,12 +34,13 @@ fn setup(
     mut materials: ResMut<Assets<StandardMaterial>>,
     mut windows: Query<(&mut Window, &mut CursorOptions), With<PrimaryWindow>>
 ) {
-    // Kamera + Player
+    // Spawn creates a new entity. Add initial components to the entity.
     commands
         .spawn((
             Player,
             Transform::from_xyz(0.0, 1.5, 5.0),
             GlobalTransform::default(),
+            PlayerChunk::default(),
         ))
         .with_children(|parent| {
             parent.spawn((
@@ -104,6 +106,12 @@ fn setup(
         cursor_options.visible = false;
         cursor_options.grab_mode = CursorGrabMode::Locked;
     }
+
+
+    //Initialize Resources
+    commands.insert_resource(PlayerPositions::default());
+    commands.insert_resource(VisibleChunks::default());
+    commands.insert_resource(ChunkStorage::default());
 }
 
 // Bewegung mit WASD
