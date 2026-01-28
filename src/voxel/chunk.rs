@@ -17,6 +17,7 @@ pub struct Chunk {
     pub cx: i32,
     pub cz: i32,
     pub blocks: Vec<u8>,
+    pub is_dirty: bool,
 }
 
 
@@ -26,6 +27,7 @@ impl Chunk {
             cx,
             cz,
             blocks: vec![0; CHUNK_SIZE * CHUNK_HEIGHT * CHUNK_SIZE],
+            is_dirty: true,
         }
     }
 
@@ -47,6 +49,8 @@ impl Chunk {
     pub fn set_block(&mut self, x: usize, y: usize, z: usize, id: u8) {
         let index = Self::index(x, y, z);
         self.blocks[index] = id;
+        //Each time a block in the chunk is changed set the is_dirty flag in order that mesh of chunk gets newly calculated.
+        self.is_dirty = true;
     }
 
     pub fn get_block(&self, x: usize, y: usize, z: usize) -> u8 {
@@ -157,6 +161,13 @@ pub fn update_visible_chunks(
                 match ChunkRange::new(DEFAULT_CHUNK_RANGE) {
                     Some(range) => {
                         let current_visible_chunks = get_chunks_playerposition(player_position_var, range);
+                        //Zuerst die identifizieren welche nicht gleich sind
+
+
+                        //Für die die nicht gleich sind, Nachbaren in visible chunks identifizieren und diese dort als dirty markieren
+
+
+
                         visible_chunks.chunks = current_visible_chunks;
                         value_query_player_chunk.chunk=current_chunk;
                     }
