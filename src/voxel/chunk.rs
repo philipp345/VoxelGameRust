@@ -4,6 +4,7 @@ use noise::{Perlin, NoiseFn};
 use bevy::prelude::*;
 use std::collections::HashMap;
 use crate::{Player, PlayerPositions};
+use std::collections::HashSet;
 
 pub const CHUNK_SIZE: usize = 16;
 pub const CHUNK_HEIGHT: usize = 128;
@@ -145,7 +146,8 @@ pub struct VisibleChunks{
 pub fn update_visible_chunks(
     mut query_player_chunk:Query<&mut PlayerChunk,With<Player>>,
     mut visible_chunks:ResMut<VisibleChunks>,
-    player_position:Res<PlayerPositions>) {
+    player_position:Res<PlayerPositions>,
+    mut storage:ResMut<ChunkStorage>) {
     let player_position_var = player_position.positions[0];
     match ChunkRange::new(0) {
         Some(range) => {
@@ -162,12 +164,23 @@ pub fn update_visible_chunks(
                     Some(range) => {
                         let current_visible_chunks = get_chunks_playerposition(player_position_var, range);
                         //Zuerst die identifizieren welche nicht gleich sind
+                        let hashset_current_visible_chunks:HashSet<(i32,i32)>=current_visible_chunks.iter().copied().collect();
+                        let hashset_old_visible_chunks:HashSet<(i32,i32)>=visible_chunks.chunks.iter().copied().collect();
+                        let mut helpvector:HashSet<(i32,i32)>=hashset_current_visible_chunks.difference(&hashset_old_visible_chunks).copied().collect();
 
 
                         //Für die die nicht gleich sind, Nachbaren in visible chunks identifizieren und diese dort als dirty markieren
+                        let mut hashset_vectorneighbours:HashSet<(i32,i32)>=HashSet::new();
+                        for &(coordx,coordz) in helpvector.iter(){
+                            hashset_vectorneighbours.extend(get_neighbours((coordx,coordz)).iter().copied());
 
-
-
+                        }
+                        let mut hashset_vectorneighboursintersections:HashSet<(i32,i32)>=hashset_vectorneighbours.intersection(&hashset_current_visible_chunks).copied().collect();
+                        for &(coordx,coordz) in hashset_vectorneighboursintersections.iter() {
+                            if let Some(chunk)=storage.chunks.get_mut(&(coordx,coordz)){
+                                chunk.is_dirty=true;
+                            }
+                        }
                         visible_chunks.chunks = current_visible_chunks;
                         value_query_player_chunk.chunk=current_chunk;
                     }
@@ -196,4 +209,15 @@ pub fn load_missing_chunks(visible_chunks:Res<VisibleChunks>,mut storage:ResMut<
             }
         }
     }
+}
+//Get 4 neighbourhood for a given chunk
+pub fn get_neighbours(coordinates:(i32,i32))->Vec<(i32,i32)>{
+    let (x, z) = coordinates;
+
+    vec![
+        (x + 1, z), // East
+        (x - 1, z), // West
+        (x, z + 1), // South
+        (x, z - 1), // North
+    ]
 }
