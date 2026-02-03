@@ -5,12 +5,13 @@ use bevy::prelude::*;
 use std::collections::HashMap;
 use crate::{Player, PlayerPositions};
 use std::collections::HashSet;
+use std::sync::OnceLock;
 
 pub const CHUNK_SIZE: usize = 16;
 pub const CHUNK_HEIGHT: usize = 128;
 pub const DEFAULT_CHUNK_RANGE: u8 = 5;
-
-
+//Static variable EDGE_INDICES will be filled by edge_indices_value()
+static EDGE_INDICES: OnceLock<HashSet<usize>> = OnceLock::new();
 
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -47,11 +48,41 @@ impl Chunk {
         (x, y, z)
     }
 
+    //set_block will be used for generating chunks
     pub fn set_block(&mut self, x: usize, y: usize, z: usize, id: u8) {
         let index = Self::index(x, y, z);
         self.blocks[index] = id;
+            }
+    //change_block is functional similar to set_block but will be used when player changes a block
+    pub fn change_block(&mut self, x: usize, y: usize, z: usize, id: u8, mut storage:ResMut<ChunkStorage>) {
         //Each time a block in the chunk is changed set the is_dirty flag in order that mesh of chunk gets newly calculated.
+        let index = Self::index(x, y, z);
+        self.blocks[index] = id;
         self.is_dirty = true;
+        //Check if index is an edge index, if yes, mark neighbour chunk as dirty as well
+        if edge_indices_value().contains(&index)  {
+            if x == 0 {
+            if let Some(chunk) = storage.chunks.get_mut(&(self.cx - 1, self.cz)) {
+                chunk.is_dirty = true;
+            }
+            }
+            if x == CHUNK_SIZE-1 {
+                if let Some(chunk) = storage.chunks.get_mut(&(self.cx + 1, self.cz)) {
+                    chunk.is_dirty = true;
+                }
+            }
+            if z == 0 {
+                if let Some(chunk) = storage.chunks.get_mut(&(self.cx, self.cz-1)) {
+                    chunk.is_dirty = true;
+                }
+            }
+            if z == CHUNK_SIZE-1 {
+                if let Some(chunk) = storage.chunks.get_mut(&(self.cx, self.cz+1)) {
+                    chunk.is_dirty = true;
+                }
+            }
+        }
+
     }
 
     pub fn get_block(&self, x: usize, y: usize, z: usize) -> u8 {
@@ -220,4 +251,30 @@ pub fn get_neighbours(coordinates:(i32,i32))->Vec<(i32,i32)>{
         (x, z + 1), // South
         (x, z - 1), // North
     ]
+}
+
+pub fn generate_edge_indices()->HashSet<usize>{
+    let mut vecindices:HashSet<usize>=HashSet::new();
+    for ch in 0..CHUNK_HEIGHT{
+        for cs in 0..CHUNK_SIZE{
+            //Add index to vector, functional similar to Chunk.index, i.e. x + CHUNK_SIZE * (z + CHUNK_SIZE * y)
+            vecindices.insert(cs + CHUNK_SIZE * (0 + CHUNK_SIZE * ch));
+            //CHUNK_SIZE-1 because that is the maximal index value
+            vecindices.insert(cs + CHUNK_SIZE * (CHUNK_SIZE-1 + CHUNK_SIZE * ch));
+        }
+    }
+    for ch in 0..CHUNK_HEIGHT{
+        for cs in 0..CHUNK_SIZE{
+            //Add index to vector, functional similar to Chunk.index, i.e. x + CHUNK_SIZE * (z + CHUNK_SIZE * y)
+            vecindices.insert(0 + CHUNK_SIZE * (cs + CHUNK_SIZE * ch));
+            //CHUNK_SIZE-1 because that is the maximal index value
+            vecindices.insert(CHUNK_SIZE-1 + CHUNK_SIZE * (cs + CHUNK_SIZE * ch));
+        }
+    }
+    vecindices
+}
+
+
+pub fn edge_indices_value() -> &'static HashSet<usize> {
+    EDGE_INDICES.get_or_init(|| generate_edge_indices())
 }

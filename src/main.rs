@@ -9,6 +9,7 @@ use bevy::math::primitives::Cuboid;
 use bevy::color::Srgba;
 use bevy::ecs::system::command::insert_resource;
 use bevy::pbr::MeshMaterial3d;
+use std::collections::HashSet;
 
 
 fn main() {
@@ -112,6 +113,7 @@ fn setup(
     commands.insert_resource(PlayerPositions::default());
     commands.insert_resource(VisibleChunks::default());
     commands.insert_resource(ChunkStorage::default());
+    
 }
 
 // Bewegung mit WASD
