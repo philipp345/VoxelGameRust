@@ -199,6 +199,12 @@ pub fn update_visible_chunks(
                         let hashset_old_visible_chunks:HashSet<(i32,i32)>=visible_chunks.chunks.iter().copied().collect();
                         let mut helpvector:HashSet<(i32,i32)>=hashset_current_visible_chunks.difference(&hashset_old_visible_chunks).copied().collect();
 
+                        //For newly visible chunks, add an is_dirty flag
+                        for &(coordx,coordz) in helpvector.iter() {
+                            if let Some(chunk)=storage.chunks.get_mut(&(coordx,coordz)){
+                                chunk.is_dirty=true;
+                            }
+                        }
 
                         //Für die die nicht gleich sind, Nachbaren in visible chunks identifizieren und diese dort als dirty markieren
                         let mut hashset_vectorneighbours:HashSet<(i32,i32)>=HashSet::new();
@@ -222,6 +228,13 @@ pub fn update_visible_chunks(
         None => {}
 
     }
+    //Für alle Chunks:
+    //      if just_became_visible:
+    //          BuildMesh(chunk)
+    //          upload mesh to GPU
+    //
+    //      if just_became_invisible:
+    //          destroy / detach mesh
 }
 #[derive(Resource,Default)]
 pub struct ChunkStorage {
