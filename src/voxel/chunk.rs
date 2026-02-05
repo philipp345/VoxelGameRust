@@ -20,6 +20,7 @@ pub struct Chunk {
     pub cz: i32,
     pub blocks: Vec<u8>,
     pub is_dirty: bool,
+    pub just_became_invisible: bool,
 }
 
 
@@ -30,6 +31,7 @@ impl Chunk {
             cz,
             blocks: vec![0; CHUNK_SIZE * CHUNK_HEIGHT * CHUNK_SIZE],
             is_dirty: true,
+            just_became_invisible: false,
         }
     }
 
@@ -198,6 +200,7 @@ pub fn update_visible_chunks(
                         let hashset_current_visible_chunks:HashSet<(i32,i32)>=current_visible_chunks.iter().copied().collect();
                         let hashset_old_visible_chunks:HashSet<(i32,i32)>=visible_chunks.chunks.iter().copied().collect();
                         let mut helpvector:HashSet<(i32,i32)>=hashset_current_visible_chunks.difference(&hashset_old_visible_chunks).copied().collect();
+                        let mut helpvector_notvisible:HashSet<(i32,i32)>=hashset_old_visible_chunks.difference(&hashset_current_visible_chunks).copied().collect();
 
                         //For newly visible chunks, add an is_dirty flag
                         for &(coordx,coordz) in helpvector.iter() {
@@ -218,6 +221,14 @@ pub fn update_visible_chunks(
                                 chunk.is_dirty=true;
                             }
                         }
+
+                        //Mark dropped visible chunks as invisible in order to destroy mesh later
+                        for &(coordx,coordz) in helpvector_notvisible.iter(){
+                            if let Some(chunk)=storage.chunks.get_mut(&(coordx,coordz)){
+                                chunk.just_became_invisible=true;
+                            }
+                        }
+
                         visible_chunks.chunks = current_visible_chunks;
                         value_query_player_chunk.chunk=current_chunk;
                     }
@@ -235,6 +246,21 @@ pub fn update_visible_chunks(
     //
     //      if just_became_invisible:
     //          destroy / detach mesh
+    for &(coordx,coordz) in visible_chunks.chunks.iter() {
+        if let Some(chunk) = storage.chunks.get_mut(&(coordx, coordz)) {
+            if chunk.is_dirty {
+                BuildMesh(chunk);
+                chunk.is_dirty=false;
+            }
+        }
+    }
+    for value in storage.chunks.values_mut() {
+        if value.just_became_invisible {
+            DestroyMesh(value);
+            value.just_became_invisible = false;
+        }
+    }
+
 }
 #[derive(Resource,Default)]
 pub struct ChunkStorage {
